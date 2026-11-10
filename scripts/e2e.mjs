@@ -64,14 +64,24 @@ ok('cleaner signs in with phone + PIN', true);
 ok('cleaner UI in Luganda', (await c.locator('text=Leero').count()) > 0);
 await shot(c, 'c1-today');
 
-// tick the next open task of the current round
-await c.locator('a[href^="/c/round/"]').first().click();
-await c.waitForURL('**/c/round/**');
-await c.waitForSelector('[data-testid="task-row"]');
-const open = c.locator('[data-testid="task-row"][data-done="0"]').first();
-const taskText = (await open.innerText()).split('\n')[0];
-await open.click();
-ok('cleaner ticks a task', await waitFor(async () => (await c.locator('[data-testid="task-row"][data-done="1"]').count()) > 0, 3000), taskText);
+// tick an open task — works at any time of day: use the first round that still has an open task,
+// and after the last round (everything done) un-tick one instead
+await c.waitForSelector('a[href^="/c/round/"]');
+const rounds = [...new Set(await c.locator('a[href^="/c/round/"]').evaluateAll((as) => as.map((a) => a.getAttribute('href'))))];
+let openRound = null;
+for (const href of rounds) {
+  await c.goto(`${BASE}${href}`);
+  await c.waitForSelector('[data-testid="task-row"]');
+  await c.waitForTimeout(400);
+  if (await c.locator('[data-testid="task-row"][data-done="0"]').count()) { openRound = href; break; }
+}
+if (!openRound) { await c.goto(`${BASE}${rounds[0]}`); await c.waitForSelector('[data-testid="task-row"]'); }
+const target = c.locator(`[data-testid="task-row"][data-done="${openRound ? 0 : 1}"]`).first();
+const doneBefore = await c.locator('[data-testid="task-row"][data-done="1"]').count();
+const taskText = (await target.innerText()).split('\n')[0];
+await target.click();
+ok(openRound ? 'cleaner ticks a task' : 'cleaner un-ticks a task (all rounds already done today)',
+  await waitFor(async () => (await c.locator('[data-testid="task-row"][data-done="1"]').count()) !== doneBefore, 3000), taskText);
 ok('tick synced to the server', await outboxEmpty(c));
 ok('Luganda task names show the English name underneath', (await c.locator('[data-testid="task-row"] span[lang="en"]').count()) > 0);
 await shot(c, 'c2-round');
