@@ -72,7 +72,10 @@ export function useRealtime(orgId: string, userId: string, role: Role) {
       return ch;
     };
 
-    const connect = (name: 'org' | 'me') => {
+    const connect = async (name: 'org' | 'me') => {
+      // join with the person's own token from the start — otherwise a channel can join anonymously and
+      // miss the token hand-over, and row-level security then hides every change from it
+      await supabase.realtime.setAuth().catch(() => undefined);
       if (disposed) return;
       const ch = build(name);
       channels[name] = ch;
@@ -89,12 +92,12 @@ export function useRealtime(orgId: string, userId: string, role: Role) {
           const wait = Math.min(30_000, 1000 * 2 ** retries[name]++);
           channels[name] = null;
           void supabase.removeChannel(ch);
-          setTimeout(() => connect(name), wait);
+          setTimeout(() => void connect(name), wait);
         }
       });
     };
-    connect('org');
-    connect('me');
+    void connect('org');
+    void connect('me');
 
     // safety net: refresh the live data every 30 s while the screen is visible
     const safety = setInterval(() => {

@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '../lib/supabase';
+import { AUTH_STORAGE_KEY, supabase } from '../lib/supabase';
 import type { Org, Profile } from '../lib/types';
 import { orgNow } from '../lib/time';
-import { clearOutbox, outbox } from '../lib/outbox';
+import { clearOutbox, flush, outbox } from '../lib/outbox';
 
 type Status = 'loading' | 'signedout' | 'noaccess' | 'ready';
 type Me = Profile & { org: Org };
@@ -79,14 +79,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     status, session, me, profile: me, org: me?.org ?? null, demoRefreshing,
     reloadMe: () => void qc.invalidateQueries({ queryKey: ['me'] }),
     signOut: async () => {
-      if (outbox.get().ops.length) {
-        const ok = window.confirm('Some of your work is still waiting to be sent. Sign out anyway?');
-        if (!ok) return;
-      }
+      const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+      // last chance to send queued work (never waits long)
+      if (outbox.get().ops.length && navigator.onLine) await Promise.race([flush(), wait(2500)]);
+      // tell the server (this device only) but never hang on it
+      await Promise.race([supabase.auth.signOut({ scope: 'local' }).catch(() => undefined), wait(1500)]);
       clearOutbox();
-      await supabase.auth.signOut();
       qc.clear();
-      try { localStorage.removeItem('rhero-query-cache'); } catch { /* ignore */ }
+      try {
+        [AUTH_STORAGE_KEY, `${AUTH_STORAGE_KEY}-code-verifier`, `${AUTH_STORAGE_KEY}-user`, 'rhero-query-cache'].forEach((k) => localStorage.removeItem(k));
+      } catch { /* storage blocked */ }
+      // a fresh page: nothing of the old session can linger
+      window.location.replace('/login');
     },
   };
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>;

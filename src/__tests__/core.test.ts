@@ -6,7 +6,7 @@ import catalog from '../../supabase/seed/catalog.json';
 import { itemStatus, needQty, available, fmtQty } from '../lib/stock';
 import { orgNow, timeToMinutes, addDays, dowOf } from '../lib/time';
 import { buildDay, routineState } from '../lib/data';
-import { mergeOps, pendingTaskState, pendingCounts, type Op } from '../lib/outbox';
+import { mergeOps, pendingTaskState, pendingCounts, viewOps, type Op } from '../lib/outbox';
 import type { Area, Routine, Task, TaskDone } from '../lib/types';
 
 describe('phone sign-in', () => {
@@ -171,5 +171,19 @@ describe('languages for the Ugandan team', () => {
     expect(longDate('2026-11-10', 'lg')).toBe('Lwakubiri, 10 Novemba');
     expect(longDate('2026-11-10', 'sw')).toBe('Jumanne, 10 Novemba');
     expect(longDate('2026-11-10', 'en')).toBe('Tuesday 10 November');
+  });
+});
+
+describe('no flicker after a tick is confirmed', () => {
+  const done = { kind: 'done', id: '1', task_id: 't1', day: 'd', done_at: 'x' } as Op;
+  it('keeps a confirmed tick on screen until fresh data arrives', () => {
+    expect(pendingTaskState(viewOps({ ops: [], settled: [{ ...done, settledAt: Date.now() }] }), 'd').get('t1')).toBe(true);
+  });
+  it('forgets old confirmations', () => {
+    expect(pendingTaskState(viewOps({ ops: [], settled: [{ ...done, settledAt: Date.now() - 60_000 }] }), 'd').get('t1')).toBeUndefined();
+  });
+  it('a newer queued untick wins over a confirmed tick', () => {
+    const undo = { kind: 'undone', id: '2', task_id: 't1', day: 'd' } as Op;
+    expect(pendingTaskState(viewOps({ ops: [undo], settled: [{ ...done, settledAt: Date.now() }] }), 'd').get('t1')).toBe(false);
   });
 });

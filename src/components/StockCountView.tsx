@@ -3,7 +3,7 @@ import { CheckCircle2, Info, Search } from 'lucide-react';
 import { useMe } from '../auth/AuthProvider';
 import { Bi, useI18n } from '../i18n';
 import { useCounts, useItems } from '../lib/data';
-import { enqueue, pendingCounts, useOutbox } from '../lib/outbox';
+import { enqueue, pendingCounts, useQueueView } from '../lib/outbox';
 import { clock, useOrgNow } from '../lib/time';
 import { fmtQty, itemStatus } from '../lib/stock';
 import type { Item, Section } from '../lib/types';
@@ -18,14 +18,14 @@ export function StockCountView({ section, title, hideTitle, bottomClass = 'botto
   const now = useOrgNow(org.timezone);
   const itemsQ = useItems();
   const countsQ = useCounts(now.date);
-  const { ops } = useOutbox();
+  const { view } = useQueueView();
   const [edits, setEdits] = useState<Record<string, V>>({});
   const [q, setQ] = useState('');
   const [saving, setSaving] = useState(false);
 
   const items = useMemo(() => (itemsQ.data ?? []).filter((i) => i.section === section && i.active), [itemsQ.data, section]);
   const today = useMemo(() => new Map((countsQ.data ?? []).map((c) => [c.item_id, c])), [countsQ.data]);
-  const pend = useMemo(() => pendingCounts(ops, now.date), [ops, now.date]);
+  const pend = useMemo(() => pendingCounts(view, now.date), [view, now.date]);
 
   const base = (i: Item): V => {
     const p = pend.get(i.id);

@@ -8,6 +8,7 @@ import path from 'node:path';
 
 const require = createRequire(import.meta.url);
 const { chromium, devices } = require('playwright');
+const { createClient } = require('@supabase/supabase-js');
 const BASE = process.env.BASE || 'http://localhost:4173';
 const SHOTS = process.env.SHOTS || './shots';
 fs.mkdirSync(SHOTS, { recursive: true });
@@ -24,6 +25,20 @@ async function waitFor(fn, ms = 10000, step = 250) {
   const end = Date.now() + ms;
   while (Date.now() < end) { if (await fn()) return true; await new Promise((r) => setTimeout(r, step)); }
   return false;
+}
+
+// the demo cleaners' languages are part of what we test: Grace = English + Luganda, Esther = English + Kiswahili
+{
+  const URL = 'https://yxmyavagjafymwnejaqp.supabase.co';
+  const KEY = fs.readFileSync(new globalThis.URL('../src/lib/supabase.ts', import.meta.url), 'utf8').match(/'(eyJ[^']+)'/)[1];
+  const sb = createClient(URL, KEY, { auth: { persistSession: false } });
+  await sb.auth.signInWithPassword({ email: 'dina@demo.rhero.app', password: 'RHero-demo-2026' });
+  const { data: s } = await sb.auth.getSession();
+  const { data: team } = await sb.from('rh_profiles').select('id, phone').eq('role', 'cleaner');
+  for (const [phone, language] of [['+971501111111', 'lg'], ['+971502222222', 'sw']]) {
+    const p = team.find((x) => x.phone === phone);
+    if (p) await fetch(`${URL}/functions/v1/rh-admin`, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: `Bearer ${s.session.access_token}` }, body: JSON.stringify({ action: 'members.update', id: p.id, language }) });
+  }
 }
 
 const outboxEmpty = (page) => waitFor(async () => (await page.evaluate(() => JSON.parse(localStorage.getItem('rhero-outbox-v1') || '[]').length)) === 0, 20000);
@@ -79,10 +94,18 @@ if (!openRound) { await c.goto(`${BASE}${rounds[0]}`); await c.waitForSelector('
 const target = c.locator(`[data-testid="task-row"][data-done="${openRound ? 0 : 1}"]`).first();
 const doneBefore = await c.locator('[data-testid="task-row"][data-done="1"]').count();
 const taskText = (await target.innerText()).split('\n')[0];
+// record every state the row shows, to prove the tick never flips back while it syncs
+await target.evaluate((el) => {
+  window.__doneLog = [el.getAttribute('data-done')];
+  new MutationObserver(() => window.__doneLog.push(el.getAttribute('data-done'))).observe(el, { attributes: true, attributeFilter: ['data-done'] });
+});
 await target.click();
 ok(openRound ? 'cleaner ticks a task' : 'cleaner un-ticks a task (all rounds already done today)',
   await waitFor(async () => (await c.locator('[data-testid="task-row"][data-done="1"]').count()) !== doneBefore, 3000), taskText);
 ok('tick synced to the server', await outboxEmpty(c));
+await c.waitForTimeout(2000); // the list reloads after the sync — the tick must stay put
+const doneLog = await c.evaluate(() => window.__doneLog);
+ok('tick shows instantly and never flickers while it syncs', doneLog.filter((v, i) => i > 0 && v !== doneLog[i - 1]).length === 1, doneLog.join(' → '));
 ok('task names in English with the Luganda name underneath', (await c.locator('[data-testid="task-row"] span[lang="lg"]').count()) > 0);
 await shot(c, 'c2-round');
 const cleaningLive = await waitFor(async () => (await kpi('kpi-cleaning')) !== cleaningBefore, 12000);
@@ -159,6 +182,20 @@ await shot(p, 'p1-form');
 await p.click('text=Send to the office manager');
 ok('employee submits a request without login', await waitFor(() => p.locator('text=Sent — thank you!').isVisible(), 10000));
 await shot(p, 'p2-form-sent');
+
+// signing out works and sticks: reopening the link shows the sign-in page
+await c.goto(`${BASE}/c/me`);
+await c.locator('button:has-text("Sign out")').click();
+ok('cleaner signs out', await c.waitForURL('**/login**', { timeout: 10000 }).then(() => true, () => false));
+await c.goto(BASE);
+await c.waitForTimeout(2500);
+ok('reopening the link shows the sign-in page', /\/login/.test(c.url()), c.url().replace(BASE, ''));
+// the demo cleaner can leave from the home screen too
+await c.locator('button:has-text("Esther Akello")').click();
+await c.waitForURL('**/c', { timeout: 25000 });
+ok('second demo cleaner sees English + Kiswahili', await waitFor(() => c.locator('text=Leo').first().isVisible(), 8000));
+await c.locator('button:has-text("Exit demo")').click();
+ok('"Exit demo" on the home screen signs out', await c.waitForURL('**/login**', { timeout: 10000 }).then(() => true, () => false));
 
 // a new cleaner with a Ugandan number (07…) signs in with the +256 format
 const ugLocal = '0772' + String(Math.floor(100000 + Math.random() * 899999));

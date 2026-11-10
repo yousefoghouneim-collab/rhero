@@ -22,7 +22,17 @@ const queryClient = new QueryClient({
 const persister = createSyncStoragePersister({ storage: window.localStorage, key: 'rhero-query-cache', throttleTime: 1500 });
 
 startOutbox();
-if ('serviceWorker' in navigator && import.meta.env.PROD) registerSW({ immediate: true });
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  registerSW({
+    immediate: true,
+    onRegisteredSW(_url, reg) {
+      if (!reg) return;
+      const check = () => { if (document.visibilityState === 'visible' && navigator.onLine) void reg.update().catch(() => undefined); };
+      setInterval(check, 60_000);
+      document.addEventListener('visibilitychange', check);
+    },
+  });
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

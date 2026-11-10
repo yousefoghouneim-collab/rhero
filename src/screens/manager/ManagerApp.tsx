@@ -76,9 +76,10 @@ export default function ManagerApp() {
 
       <main className="min-w-0 flex-1 pb-[calc(70px+env(safe-area-inset-bottom))] lg:pb-0">
         {org.is_demo && (
-          <div className="bg-brand-red px-4 py-1 text-center text-[12px] font-semibold text-white no-print">
+          <div className="flex items-center justify-center gap-3 bg-brand-red px-4 py-1 text-[12px] font-semibold text-white no-print">
             <span className="sm:hidden">Demo · sample data, refreshed daily</span>
             <span className="hidden sm:inline">Demo workspace — sample data, refreshed daily. Changes you make are visible to other demo users.</span>
+            <button onClick={() => void signOut()} className="rounded-full bg-white/20 px-2.5 py-0.5 hover:bg-white/30">Exit demo</button>
           </div>
         )}
         <Suspense fallback={<PageLoader />}>

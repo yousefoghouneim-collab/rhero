@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, CheckCircle2, ChevronRight, Clock, Package } from 'lucide-react';
-import { useMe } from '../../auth/AuthProvider';
+import { AlertTriangle, CheckCircle2, ChevronRight, Clock, LogOut, Package } from 'lucide-react';
+import { useState } from 'react';
+import { useAuth, useMe } from '../../auth/AuthProvider';
 import { Bi, BiName, useI18n } from '../../i18n';
 import { longDate } from '../../i18n/locale';
 import { useToday } from '../../lib/today';
@@ -22,6 +23,8 @@ export default function CleanerToday() {
   const { me, org } = useMe();
   const { t, ts, tb, second, dir2 } = useI18n();
   const { now, rounds, total, done, loading } = useToday();
+  const { signOut } = useAuth();
+  const [leaving, setLeaving] = useState(false);
   const gKey: StrKey = now.minutes < 12 * 60 ? 'goodMorning' : now.minutes < 17 * 60 ? 'goodAfternoon' : 'goodEvening';
   const first = me.full_name.split(' ')[0];
   const current = rounds.find((r) => r.state === 'active') ?? rounds.find((r) => r.state === 'upcoming') ?? rounds.find((r) => r.state === 'overdue');
@@ -46,7 +49,13 @@ export default function CleanerToday() {
                 </p>
               )}
             </div>
-            {org.is_demo && <span className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider">{t('demo')}</span>}
+            {org.is_demo && (
+              <button onClick={() => { setLeaving(true); void signOut(); }} disabled={leaving}
+                className="focus-ring flex shrink-0 items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-start text-[12px] font-semibold text-white transition hover:bg-white/25 active:bg-white/30 disabled:opacity-60">
+                {leaving ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <LogOut className="h-3.5 w-3.5" />}
+                <Bi k="exitDemo" stack sub="text-[10px] font-medium opacity-75" />
+              </button>
+            )}
           </div>
         </div>
       </header>

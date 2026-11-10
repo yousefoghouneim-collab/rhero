@@ -6,16 +6,26 @@ import { Bi, useI18n } from '../../i18n';
 import { langLabel } from '../../i18n/strings';
 import { useTeam } from '../../lib/data';
 import { useToday } from '../../lib/today';
+import { useOutbox } from '../../lib/outbox';
 import { adminCall, supabase } from '../../lib/supabase';
 import { formatPhone } from '../../lib/phone';
 import type { Lang } from '../../lib/types';
-import { Avatar, Card, Sheet, Stat } from '../../components/ui';
+import { Avatar, Button, Card, Sheet, Stat } from '../../components/ui';
 import { LanguageSheet } from '../../components/LanguageSheet';
 
 export default function CleanerMe() {
   const { me, org } = useMe();
   const { signOut } = useAuth();
   const { tb, pref } = useI18n();
+  const { ops, online } = useOutbox();
+  const [leaving, setLeaving] = useState(false);
+  const [askLeave, setAskLeave] = useState(false);
+  const leave = async (force = false) => {
+    if (!force && ops.length && !online) { setAskLeave(true); return; }
+    setAskLeave(false);
+    setLeaving(true);
+    await signOut();
+  };
   const qc = useQueryClient();
   const team = useTeam();
   const { doneRows, stock } = useToday();
@@ -67,14 +77,18 @@ export default function CleanerMe() {
               <span className="text-muted" dir="ltr">{manager.full_name.split(' ')[0]}</span>
             </a>
           )}
-          <button onClick={() => void signOut()} className="flex w-full items-center gap-3 p-4 text-start text-bad">
-            <LogOut className="h-5 w-5 flip-rtl" />
+          <button onClick={() => void leave()} disabled={leaving} className="flex w-full items-center gap-3 p-4 text-start text-bad active:bg-bad-soft/40 disabled:opacity-60">
+            {leaving ? <span className="h-5 w-5 animate-spin rounded-full border-2 border-bad/30 border-t-bad" /> : <LogOut className="h-5 w-5 flip-rtl" />}
             <span className="block flex-1 font-semibold"><Bi k="signOut" sub="block text-[13px] font-medium opacity-75" /></span>
           </button>
         </Card>
         <p className="text-center text-xs text-muted">RHero v1.0 · RH Aero Systems</p>
       </div>
       <LanguageSheet open={langOpen} onClose={() => setLangOpen(false)} value={pref} onPick={(l) => void pickLang(l)} />
+      <Sheet open={askLeave} onClose={() => setAskLeave(false)} title={tb('signOut')}
+        footer={<div className="flex gap-2"><Button variant="secondary" block onClick={() => setAskLeave(false)}>{tb('cancel')}</Button><Button variant="danger" block onClick={() => void leave(true)}>{tb('signOut')}</Button></div>}>
+        <p className="text-muted"><Bi k="unsentSignOut" sub="mt-1 block" /></p>
+      </Sheet>
       <Sheet open={installOpen} onClose={() => setInstallOpen(false)} title={tb('installApp')}>
         <InstallSteps />
       </Sheet>

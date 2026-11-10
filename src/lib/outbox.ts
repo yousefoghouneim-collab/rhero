@@ -1,6 +1,7 @@
 // Offline-first queue for the cleaners' actions (task ticks, stock counts, issues).
 // Every action is saved locally first, shown instantly, then sent to the server.
 // If there is no connection it stays in the queue and is retried automatically.
+import { useMemo } from 'react';
 import { supabase } from './supabase';
 import { createStore, useStore } from './store';
 
@@ -11,17 +12,47 @@ export type Op =
   | { kind: 'counts'; id: string; day: string; rows: CountRow[]; at: string }
   | { kind: 'issue'; id: string; org_id: string; area_id: string | null; issue_kind: string; note: string | null; photo?: string | null; at: string };
 
-type State = { ops: Op[]; syncing: boolean; online: boolean; lastError: string | null };
+/** An action the server has just confirmed. Screens keep showing it until fresh data from the server
+ *  includes it, so a tick never flips back for a moment while the list reloads. */
+export type SettledOp = Op & { settledAt: number };
+export const SETTLED_TTL = 30_000;
+type State = { ops: Op[]; settled: SettledOp[]; syncing: boolean; online: boolean; lastError: string | null };
 const KEY = 'rhero-outbox-v1';
 
 function load(): Op[] {
   try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; }
 }
-export const outbox = createStore<State>({ ops: load(), syncing: false, online: typeof navigator === 'undefined' ? true : navigator.onLine, lastError: null });
+export const outbox = createStore<State>({ ops: load(), settled: [], syncing: false, online: typeof navigator === 'undefined' ? true : navigator.onLine, lastError: null });
 function persist() {
   try { localStorage.setItem(KEY, JSON.stringify(outbox.get().ops)); } catch { /* storage full or blocked */ }
 }
 export const useOutbox = () => useStore(outbox);
+
+const sameTask = (a: Op, b: Op) => (a.kind === 'done' || a.kind === 'undone') && (b.kind === 'done' || b.kind === 'undone') && a.task_id === b.task_id && a.day === b.day;
+
+/** Confirmed (still fresh) + queued actions, oldest first — later entries win. */
+export function viewOps(s: Pick<State, 'ops' | 'settled'>, now = Date.now()): Op[] {
+  return [...s.settled.filter((x) => now - x.settledAt < SETTLED_TTL), ...s.ops];
+}
+/** The queue plus what the screens should show (see SettledOp). */
+export function useQueueView() {
+  const s = useStore(outbox);
+  const view = useMemo(() => viewOps(s), [s.settled, s.ops]); // eslint-disable-line react-hooks/exhaustive-deps
+  return { ...s, view };
+}
+/** Forget confirmed actions once the server data shows them (keep → still needed). */
+export function pruneSettled(keep: (x: SettledOp) => boolean) {
+  const s = outbox.get();
+  const now = Date.now();
+  const next = s.settled.filter((x) => now - x.settledAt < SETTLED_TTL && keep(x));
+  if (next.length !== s.settled.length) outbox.set((st) => ({ ...st, settled: next }));
+}
+function settle(settled: SettledOp[], op: Op): SettledOp[] {
+  if (op.kind === 'issue') return settled;
+  const now = Date.now();
+  const rest = settled.filter((x) => now - x.settledAt < SETTLED_TTL && !sameTask(x, op));
+  return [...rest, { ...op, settledAt: now }];
+}
 const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
 
 type Listener = (op: Op, ok: boolean, err?: string) => void;
@@ -112,7 +143,8 @@ export function flush(): Promise<void> {
         const op = outbox.get().ops[0];
         try {
           await run(op);
-          outbox.set((s) => ({ ...s, ops: s.ops.filter((o) => o.id !== op.id), online: true, lastError: null }));
+          // one update: the action leaves the queue and stays on screen as "confirmed" — no flicker
+          outbox.set((s) => ({ ...s, ops: s.ops.filter((o) => o.id !== op.id), settled: settle(s.settled, op), online: true, lastError: null }));
           persist();
           listeners.forEach((l) => l(op, true));
         } catch (e) {
@@ -145,7 +177,10 @@ export function startOutbox() {
   window.addEventListener('online', () => { setOnline(true); void flush(); });
   window.addEventListener('offline', () => setOnline(false));
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') void flush(); });
-  setInterval(() => { if (outbox.get().ops.length) void flush(); }, 15_000);
+  setInterval(() => {
+    if (outbox.get().ops.length) void flush();
+    if (outbox.get().settled.length) pruneSettled(() => true); // drop expired confirmations
+  }, 15_000);
   void flush();
 }
 
@@ -163,6 +198,6 @@ export function pendingCounts(ops: Op[], day: string): Map<string, CountRow> {
   return m;
 }
 export function clearOutbox() {
-  outbox.set((s) => ({ ...s, ops: [] }));
+  outbox.set((s) => ({ ...s, ops: [], settled: [] }));
   persist();
 }

@@ -6,8 +6,19 @@ export const SUPABASE_ANON_KEY =
   (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ??
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl4bXlhdmFnamFmeW13bmVqYXFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMyNzUyODEsImV4cCI6MjA5ODg1MTI4MX0.PUKznXyVGV9c1FIySbKYSwqmsOcbwM0wGW6zY-3VlSw';
 
+// Auth operations are serialised inside this page only. The default browser-wide lock (navigator.locks)
+// can be left held by a page that was suspended in the background, which makes sign-out hang forever.
+const chains = new Map<string, Promise<unknown>>();
+async function pageLock<R>(name: string, _acquireTimeout: number, fn: () => Promise<R>): Promise<R> {
+  const prev = chains.get(name) ?? Promise.resolve();
+  const run = prev.catch(() => undefined).then(fn);
+  chains.set(name, run.catch(() => undefined));
+  return run;
+}
+
+export const AUTH_STORAGE_KEY = 'rhero-auth';
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'rhero-auth' },
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: AUTH_STORAGE_KEY, lock: pageLock },
   realtime: { params: { eventsPerSecond: 20 } },
 });
 

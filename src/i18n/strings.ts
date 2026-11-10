@@ -117,6 +117,16 @@ const BASE = {
   doneToday: r('Done today', 'تم اليوم', 'आज पूरे', 'آج مکمل', 'আজ সম্পন্ন', 'ഇന്ന് പൂർത്തിയായത്', 'Tapos ngayon'),
   allRounds: r("Today's rounds", 'جولات اليوم', 'आज के राउंड', 'آج کے راؤنڈ', 'আজকের রাউন্ড', 'ഇന്നത്തെ റൗണ്ടുകൾ', 'Mga round ngayon'),
   required: r('Please fill this in', 'يرجى ملء هذا الحقل', 'कृपया यह भरें', 'براہ کرم یہ بھریں', 'অনুগ্রহ করে এটি পূরণ করুন', 'ദയവായി ഇത് പൂരിപ്പിക്കുക', 'Pakipunan ito'),
+  exitDemo: r('Exit demo', 'الخروج من التجربة', 'डेमो से बाहर निकलें', 'ڈیمو سے باہر نکلیں', 'ডেমো থেকে বের হন', 'ഡെമോയിൽ നിന്ന് പുറത്തുകടക്കുക', 'Lumabas sa demo'),
+  cancel: r('Cancel', 'إلغاء', 'रद्द करें', 'منسوخ کریں', 'বাতিল', 'റദ്ദാക്കുക', 'Kanselahin'),
+  unsentSignOut: r(
+    'Some of your work has not been sent yet (no internet). Sign out anyway?',
+    'لم يتم إرسال بعض عملك بعد (لا يوجد إنترنت). هل تريد تسجيل الخروج على أي حال؟',
+    'आपका कुछ काम अभी भेजा नहीं गया है (इंटरनेट नहीं)। फिर भी साइन आउट करें?',
+    'آپ کا کچھ کام ابھی نہیں بھیجا گیا (انٹرنیٹ نہیں)۔ پھر بھی سائن آؤٹ کریں؟',
+    'আপনার কিছু কাজ এখনও পাঠানো হয়নি (ইন্টারনেট নেই)। তবুও সাইন আউট করবেন?',
+    'നിങ്ങളുടെ ചില ജോലികൾ ഇതുവരെ അയച്ചിട്ടില്ല (ഇന്റർനെറ്റ് ഇല്ല). എന്നിട്ടും സൈൻ ഔട്ട് ചെയ്യണോ?',
+    'May trabaho kang hindi pa naipapadala (walang internet). Mag-sign out pa rin?'),
 } satisfies Record<string, Base>;
 
 export type StrKey = keyof typeof BASE;
@@ -212,6 +222,9 @@ const UG: Record<StrKey, [lg: string, sw: string]> = {
   doneToday: ['Egiwedde leero', 'Zilizokamilika leo'],
   allRounds: ['Emirimu gya leero', 'Ratiba ya leo'],
   required: ['Jjuzaamu wano', 'Tafadhali jaza hapa'],
+  exitDemo: ['Fuluma mu demo', 'Toka kwenye majaribio'],
+  cancel: ['Sazaamu', 'Ghairi'],
+  unsentSignOut: ["Ebimu ku by'okoze tebinnaweerezebwa (tewali intaneeti). Ofulume wadde kiri kityo?", 'Baadhi ya kazi yako bado haijatumwa (hakuna mtandao). Utoke hata hivyo?'],
 };
 
 export const STRINGS = Object.fromEntries(
