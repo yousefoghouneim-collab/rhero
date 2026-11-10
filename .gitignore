@@ -7,3 +7,4 @@ dev-dist
 .DS_Store
 .vercel
 test-results
+.env*

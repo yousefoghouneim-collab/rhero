@@ -19,6 +19,8 @@ screen live.
 
 ## Try it
 
+**Live app: https://rhero-aero.vercel.app**
+
 Open the app and tap one of the demo accounts on the sign-in screen (sample data, rebuilt every day):
 
 | Who | Sign in with | Language |
@@ -117,8 +119,9 @@ The Supabase URL and public key are built in; to point the app at another projec
 
 ## Deploy
 
-Vercel picks everything up from `vercel.json` (Vite build, SPA rewrites, cache headers). Import the repository
-in Vercel and deploy — no environment variables are required.
+The Vercel project `rhero` is connected to this repository: every push to `main` goes live on
+https://rhero-aero.vercel.app (pull requests get their own preview links). Everything comes from `vercel.json`
+(Vite build, SPA rewrites, cache headers) — no environment variables are required.
 
 ## Roadmap
 
