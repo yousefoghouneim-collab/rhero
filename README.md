@@ -9,6 +9,12 @@ It installs like an app on iPhone and Android (PWA, "Add to Home Screen"), keeps
 internet (ticks and counts are sent automatically when the phone is back online) and updates every
 screen live.
 
+<p>
+  <img src="docs/screenshots/manager-dashboard.png" alt="Office manager dashboard" width="640">
+  <img src="docs/screenshots/cleaner-today-luganda.png" alt="Cleaner app in Luganda" width="180">
+  <img src="docs/screenshots/cleaner-round-luganda.png" alt="Cleaning round in Luganda with the English names underneath" width="180">
+</p>
+
 ---
 
 ## Try it
