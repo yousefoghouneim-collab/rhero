@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 243 244 248;
+  --surface: 255 255 255;
+  --sunken: 247 248 251;
+  --line: 228 231 239;
+  --ink: 22 26 51;
+  --muted: 100 108 138;
+  color-scheme: light;
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  input, select, textarea, button { font: inherit; }
+  input, select, textarea { font-size: 16px; } /* prevents iOS zoom on focus */
+  ::selection { background: rgb(32 40 84 / .18); }
+  [dir='rtl'] .flip-rtl { transform: scaleX(-1); }
+}
+
+@layer utilities {
+  .tnum { font-variant-numeric: tabular-nums; }
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
+  .h-safe-top { height: env(safe-area-inset-top); }
+  .scrollbar-none { scrollbar-width: none; }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+  .text-balance { text-wrap: balance; }
+  .bg-navy-grad { background: linear-gradient(160deg, #283273 0%, #202854 45%, #161b42 100%); }
+  .livery { background: linear-gradient(90deg, #b20709 0 22%, transparent 22%); }
+}
+
+.focus-ring { @apply outline-none focus-visible:ring-2 focus-visible:ring-navy-400 focus-visible:ring-offset-2; }
+
+@media print {
+  @page { size: A4; margin: 14mm; }
+  body { background: #fff !important; }
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  .print-card { box-shadow: none !important; border: 1px solid #ccc !important; break-inside: avoid; }
+}
+.print-only { display: none; }

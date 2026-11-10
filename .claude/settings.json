@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash",
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "NotebookEdit",
+      "WebFetch",
+      "WebSearch",
+      "Artifact",
+      "mcp__Supabase",
+      "mcp__Google_Drive",
+      "mcp__Google_Sheets",
+      "mcp__Google_Docs",
+      "mcp__Gmail",
+      "mcp__Claude_Docs",
+      "mcp__claude-code-remote"
+    ]
+  }
+}

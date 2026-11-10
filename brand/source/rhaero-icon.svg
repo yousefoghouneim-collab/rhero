@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="RHAero_Icon" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 160 160">
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #fff }
+    }
+  </style>
+  <rect id="bg" class="bg" width="160" height="160" fill="none"/>
+  <path id="Pfad_21171" d="M159.33,86.25H24.47c-13.14,0-23.8,10.65-23.8,23.8v38.04c23.92-37.92,120.75-56.64,158.67-61.84Z" fill="#07275c"/>
+  <g id="Gruppe_1481">
+    <path id="Pfad_21181" d="M159.33,95.53c-31.69,4.44-79.71,14.58-113.94,30.26v31.71c37.54-42.12,64.04-47.49,113.94-61.97Z" fill="#080a3c"/>
+  </g>
+  <path id="Pfad_21351" d="M159.33,75.33H24.47c-13.14,0-23.8-10.66-23.8-23.8V13.49c23.92,37.92,120.75,56.64,158.67,61.84Z" fill="#b20709"/>
+  <g id="Gruppe_1511">
+    <path id="Pfad_21361" d="M159.33,66.05c-31.69-4.44-79.71-14.58-113.94-30.26V4.08c37.54,42.12,64.04,47.49,113.94,61.97Z" fill="#560a1c"/>
+  </g>
+</svg>

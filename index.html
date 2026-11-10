@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>RHero · RH Aero Systems</title>
+    <meta name="description" content="RHero — office operations for RH Aero Systems Dubai: cleaning rounds, live pantry & stationery stock, supply orders and requests." />
+    <meta name="theme-color" content="#202854" />
+    <meta name="color-scheme" content="light" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="RHero" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta property="og:title" content="RHero · RH Aero Systems" />
+    <meta property="og:description" content="Cleaning rounds, live pantry & stationery stock, supply orders and requests — in one app." />
+    <meta property="og:image" content="/icons/og-image.png" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/icons/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <style>
+      html,body{margin:0;background:#202854}
+      #boot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:linear-gradient(160deg,#252e66 0%,#151a40 100%);z-index:9999;transition:opacity .25s}
+      #boot img{width:200px;height:auto}
+      #boot .bar{width:120px;height:3px;border-radius:3px;background:rgba(255,255,255,.15);overflow:hidden}
+      #boot .bar i{display:block;width:40%;height:100%;background:#f25a5a;border-radius:3px;animation:bootbar 1s ease-in-out infinite}
+      @keyframes bootbar{0%{transform:translateX(-100%)}100%{transform:translateX(250%)}}
+    </style>
+  </head>
+  <body>
+    <div id="boot"><img src="/icons/rhero-logo-dark.svg" alt="RHero" /><div class="bar"><i></i></div></div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
