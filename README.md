@@ -11,8 +11,8 @@ screen live.
 
 <p>
   <img src="docs/screenshots/manager-dashboard.png" alt="Office manager dashboard" width="640">
-  <img src="docs/screenshots/cleaner-today-luganda.png" alt="Cleaner app in Luganda" width="180">
-  <img src="docs/screenshots/cleaner-round-luganda.png" alt="Cleaning round in Luganda with the English names underneath" width="180">
+  <img src="docs/screenshots/cleaner-today-luganda.png" alt="Cleaner app in English with Luganda underneath" width="180">
+  <img src="docs/screenshots/cleaner-round-luganda.png" alt="Cleaning round: tasks in English with the Luganda names underneath" width="180">
 </p>
 
 ---
@@ -26,10 +26,13 @@ Open the app and tap one of the demo accounts on the sign-in screen (sample data
 | Who | Sign in with | Language |
 | --- | --- | --- |
 | Dina Maged — office manager | `dina@demo.rhero.app` · `RHero-demo-2026` | English |
-| Grace Nakato — cleaner | phone `050 111 1111` · PIN `1111` | Luganda |
-| Esther Akello — cleaner | phone `050 222 2222` · PIN `2222` | English |
+| Grace Nakato — cleaner | phone `050 111 1111` · PIN `1111` | English + Luganda |
+| Esther Akello — cleaner | phone `050 222 2222` · PIN `2222` | English + Kiswahili |
 
 Shortcut links: `/login?demo=manager`, `/login?demo=cleaner`, `/login?demo=cleaner2`.
+
+The demo always leaves work to try, whatever the time: the lunch round is half done, the afternoon toilet
+check and the daily stock count are still open.
 
 The real workspace (RH Aero Systems — Dubai South) is separate from the demo and starts with the full
 catalogue (rooms, rounds, tasks, 88 stock items) but no history.
@@ -63,9 +66,9 @@ receive — receiving adds the stock back).
   (`0772 123 456` or `+256 772 123 456`) numbers both work.
 * The office manager adds a cleaner in **Team** and sends the login on WhatsApp with one tap
   (the message is written in the cleaner's language).
-* App languages: **English, Luganda, Kiswahili** (the team is from Uganda), plus Arabic, Hindi, Urdu, Bengali,
-  Malayalam and Tagalog. Task names in another language always show the English name underneath, so
-  everyone uses the same names as the office.
+* The app always shows **English first, with the cleaner's own language underneath** — Luganda or Kiswahili
+  for the Ugandan team (Arabic, Hindi, Urdu, Bengali, Malayalam and Tagalog are available too). Everyone uses the
+  same names as the office, and nothing depends on a translation alone.
 * Big buttons, one tap per task, photo with problem reports, and everything works offline.
 
 ## Office manager

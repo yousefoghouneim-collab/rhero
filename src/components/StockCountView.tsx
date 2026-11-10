@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { CheckCircle2, Info, Search } from 'lucide-react';
 import { useMe } from '../auth/AuthProvider';
-import { useI18n } from '../i18n';
+import { Bi, useI18n } from '../i18n';
 import { useCounts, useItems } from '../lib/data';
 import { enqueue, pendingCounts, useOutbox } from '../lib/outbox';
 import { clock, useOrgNow } from '../lib/time';
@@ -12,9 +12,9 @@ import { Button, Input, ProgressBar, Skeleton, Stepper, cx, statusBar } from './
 
 type V = { o: number; s: number };
 
-export function StockCountView({ section, title, bottomClass = 'bottom-[calc(64px+env(safe-area-inset-bottom))]' }: { section: Section; title: string; bottomClass?: string }) {
+export function StockCountView({ section, title, hideTitle, bottomClass = 'bottom-[calc(68px+env(safe-area-inset-bottom))]' }: { section: Section; title: string; hideTitle?: boolean; bottomClass?: string }) {
   const { org } = useMe();
-  const { t } = useI18n();
+  const { t, ts, tb, second, dir2 } = useI18n();
   const now = useOrgNow(org.timezone);
   const itemsQ = useItems();
   const countsQ = useCounts(now.date);
@@ -53,7 +53,7 @@ export function StockCountView({ section, title, bottomClass = 'bottom-[calc(64p
     setSaving(true);
     enqueue({ kind: 'counts', day: now.date, at: new Date().toISOString(), rows: items.map((i) => { const v = val(i); return { item_id: i.id, qty_opened: i.track_opened ? v.o : 0, qty_store: v.s }; }) });
     setEdits({});
-    toast(`${t('saved')} ✓`);
+    toast(`${tb('saved')} ✓`);
     try { navigator.vibrate?.([20, 40, 20]); } catch { /* ignore */ }
     setSaving(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -66,7 +66,7 @@ export function StockCountView({ section, title, bottomClass = 'bottom-[calc(64p
       <div className="space-y-3 px-4 pt-4">
         <div className="rounded-2xl border border-line bg-surface p-4 shadow-card">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold">{title}</h2>
+            {hideTitle ? <span /> : <h2 className="text-lg font-semibold">{title}</h2>}
             {countedToday >= items.length && items.length > 0 ? (
               <span className="flex items-center gap-1 text-sm font-semibold text-ok"><CheckCircle2 className="h-4 w-4" />{t('statusDone')}</span>
             ) : null}
@@ -74,14 +74,19 @@ export function StockCountView({ section, title, bottomClass = 'bottom-[calc(64p
           <p className="mt-0.5 text-[13px] text-muted">
             {lastAt ? t('countedAt', { time: clock(lastAt, org.timezone) }) : t('notCounted')} · {t('itemsCounted', { n: countedToday, total: items.length })}
           </p>
+          {second && (
+            <p className="text-[12.5px] text-muted/90" lang={second} dir={dir2}>
+              {lastAt ? ts('countedAt', { time: clock(lastAt, org.timezone) }) : ts('notCounted')} · {ts('itemsCounted', { n: countedToday, total: items.length })}
+            </p>
+          )}
           <ProgressBar value={items.length ? countedToday / items.length : 0} className="mt-3" height="h-1.5" bar={countedToday >= items.length ? 'bg-ok' : 'bg-navy-700'} />
           {section === 'pantry' && (
-            <p className="mt-3 flex gap-2 rounded-xl bg-navy-50 px-3 py-2.5 text-[13px] leading-snug text-navy-700"><Info className="mt-0.5 h-4 w-4 shrink-0" />{t('stockHint')}</p>
+            <p className="mt-3 flex gap-2 rounded-xl bg-navy-50 px-3 py-2.5 text-[13px] leading-snug text-navy-700"><Info className="mt-0.5 h-4 w-4 shrink-0" /><span><Bi k="stockHint" sub="mt-1.5 block opacity-80" /></span></p>
           )}
         </div>
         <div className="relative">
           <Search className="pointer-events-none absolute start-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('search')} className="ps-11" type="search" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={tb('search')} className="ps-11" type="search" />
         </div>
       </div>
 
@@ -112,8 +117,8 @@ export function StockCountView({ section, title, bottomClass = 'bottom-[calc(64p
                     </div>
                   </div>
                   <div className="mt-2.5 flex items-end justify-end gap-3">
-                    {i.track_opened && <Stepper label={t('opened')} value={v.o} onChange={(n) => set(i, { o: n })} changed={changed && v.o !== b.o} />}
-                    <Stepper label={i.track_opened ? t('inStore') : t('count')} value={v.s} onChange={(n) => set(i, { s: n })} changed={changed && v.s !== b.s} />
+                    {i.track_opened && <Stepper label={t('opened')} sub={ts('opened')} value={v.o} onChange={(n) => set(i, { o: n })} changed={changed && v.o !== b.o} />}
+                    <Stepper label={i.track_opened ? t('inStore') : t('count')} sub={i.track_opened ? ts('inStore') : ts('count')} value={v.s} onChange={(n) => set(i, { s: n })} changed={changed && v.s !== b.s} />
                   </div>
                 </div>
               );
@@ -125,7 +130,14 @@ export function StockCountView({ section, title, bottomClass = 'bottom-[calc(64p
       <div className={cx('fixed inset-x-0 z-30 px-4 pb-3 pt-2 no-print', bottomClass)}>
         <div className="mx-auto max-w-md">
           <Button size="xl" block loading={saving} onClick={save} variant={changedIds.length ? 'primary' : 'success'} className="shadow-lift">
-            {changedIds.length ? `${t('saveCount')} · ${t('changedN', { n: changedIds.length })}` : t('confirmAll')}
+            <span className="flex flex-col items-center leading-tight">
+              <span>{changedIds.length ? `${t('saveCount')} · ${t('changedN', { n: changedIds.length })}` : t('confirmAll')}</span>
+              {second && (
+                <span className="text-[13px] font-medium opacity-80" lang={second} dir={dir2}>
+                  {changedIds.length ? `${ts('saveCount')} · ${ts('changedN', { n: changedIds.length })}` : ts('confirmAll')}
+                </span>
+              )}
+            </span>
           </Button>
         </div>
       </div>

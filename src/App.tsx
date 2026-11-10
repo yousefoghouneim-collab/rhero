@@ -20,8 +20,9 @@ function LangGate({ children }: { children: ReactNode }) {
   const { me } = useAuth();
   const loc = useLocation();
   const publicPage = loc.pathname.startsWith('/f/') || loc.pathname.startsWith('/print/');
-  const forced = publicPage || me?.role === 'manager' ? 'en' : me?.role === 'cleaner' ? me.language : null;
-  return <I18nProvider forced={forced}>{children}</I18nProvider>;
+  // English first everywhere; cleaners also see their own language underneath
+  const pref = publicPage || me?.role === 'manager' ? 'en' : me?.role === 'cleaner' ? me.language : null;
+  return <I18nProvider pref={pref}>{children}</I18nProvider>;
 }
 
 function RequireRole({ role, children }: { role: Role; children: ReactNode }) {

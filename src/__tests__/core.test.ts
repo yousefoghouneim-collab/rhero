@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { normalizePhone, phoneEmail, pinPassword, formatPhone, maskPhoneInput, localPhone } from '../lib/phone';
-import { STRINGS, LANGS } from '../i18n/strings';
+import { STRINGS, LANGS, langLabel } from '../i18n/strings';
 import { longDate } from '../i18n/locale';
 import catalog from '../../supabase/seed/catalog.json';
 import { itemStatus, needQty, available, fmtQty } from '../lib/stock';
@@ -144,6 +144,12 @@ describe('offline queue', () => {
 describe('languages for the Ugandan team', () => {
   it('offers English, Luganda and Kiswahili first', () => {
     expect(LANGS.slice(0, 3).map((l) => l.code)).toEqual(['en', 'lg', 'sw']);
+  });
+  it('always pairs another language with English', () => {
+    expect(langLabel('en')).toBe('English');
+    expect(langLabel('lg')).toBe('English + Luganda');
+    expect(langLabel('sw')).toBe('English + Swahili');
+    expect(langLabel(null)).toBe('English');
   });
   it('has every app text in every language, with the same {placeholders}', () => {
     const vars = (s: string) => (s.match(/\{\w+\}/g) ?? []).sort().join(',');

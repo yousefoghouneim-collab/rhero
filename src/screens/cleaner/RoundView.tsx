@@ -2,9 +2,10 @@ import { useMemo } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, PartyPopper } from 'lucide-react';
 import { useMe } from '../../auth/AuthProvider';
-import { useI18n } from '../../i18n';
+import { Bi, BiName, useI18n } from '../../i18n';
 import { useToday } from '../../lib/today';
 import { useTeam, type DayTask } from '../../lib/data';
+import type { I18n } from '../../lib/types';
 import { clock, hhmm } from '../../lib/time';
 import { Badge, Button, CheckCircle, ProgressBar, Skeleton, cx } from '../../components/ui';
 import { RoundStatus } from './CleanerToday';
@@ -13,22 +14,22 @@ export default function RoundView() {
   const { id } = useParams();
   const nav = useNavigate();
   const { me, org } = useMe();
-  const { t, tr, lang } = useI18n();
+  const { t, tb, trs, second, dir2 } = useI18n();
   const { rounds, loading, toggle } = useToday();
   const team = useTeam();
   const names = useMemo(() => new Map((team.data ?? []).map((p) => [p.id, p.full_name.split(' ')[0]])), [team.data]);
   const round = rounds.find((r) => r.id === id);
 
   const groups = useMemo(() => {
-    const g: { key: string; icon: string; name: string; tasks: DayTask[] }[] = [];
+    const g: { key: string; icon: string; name: string; i18n: I18n | null; tasks: DayTask[] }[] = [];
     for (const task of round?.tasks ?? []) {
       const key = task.area?.id ?? 'none';
       let grp = g.find((x) => x.key === key);
-      if (!grp) { grp = { key, icon: task.area?.icon ?? '🧹', name: task.area ? tr(task.area.name, task.area.name_i18n) : '', tasks: [] }; g.push(grp); }
+      if (!grp) { grp = { key, icon: task.area?.icon ?? '🧹', name: task.area?.name ?? '', i18n: task.area?.name_i18n ?? null, tasks: [] }; g.push(grp); }
       grp.tasks.push(task);
     }
     return g;
-  }, [round, tr]);
+  }, [round]);
 
   if (loading) return <div className="space-y-3 p-4"><Skeleton className="h-28" /><Skeleton className="h-16" /><Skeleton className="h-16" /></div>;
   if (!round) return <Navigate to="/c" replace />;
@@ -43,7 +44,7 @@ export default function RoundView() {
             <ArrowLeft className="h-6 w-6 flip-rtl" />
           </button>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-lg font-semibold">{round.icon} {tr(round.name, round.name_i18n)}</h1>
+            <h1 className="text-lg font-semibold leading-tight">{round.icon} <BiName base={round.name} i18n={round.name_i18n} sub="block text-[13px] font-medium text-muted" /></h1>
             <p className="text-[13px] text-muted tnum" dir="ltr">{hhmm(round.start_time)}–{hhmm(round.end_time)}</p>
           </div>
           <RoundStatus r={round} />
@@ -55,12 +56,13 @@ export default function RoundView() {
       </header>
 
       <div className="space-y-5 px-4 pb-6 pt-4">
-        {!allDone && <p className="rounded-xl bg-navy-50 px-3.5 py-2.5 text-[14px] font-medium text-navy-700">👆 {t('tapWhenDone')}</p>}
+        {!allDone && <p className="rounded-xl bg-navy-50 px-3.5 py-2.5 text-[14px] font-medium text-navy-700">👆 <Bi k="tapWhenDone" sub="block text-[13px] font-medium opacity-80" /></p>}
         {groups.map((g) => (
           <section key={g.key}>
             {g.name && (
               <h2 className="mb-2 flex items-center gap-2 px-1 text-[15px] font-semibold text-ink">
-                <span className="text-xl">{g.icon}</span>{g.name}
+                <span className="text-xl">{g.icon}</span>
+                <span className="min-w-0"><BiName base={g.name} i18n={g.i18n} sub="block text-[13px] font-medium text-muted" /></span>
               </h2>
             )}
             <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
@@ -71,9 +73,9 @@ export default function RoundView() {
                     className={cx('flex w-full items-center gap-3.5 px-4 py-3.5 text-start transition active:bg-navy-50', i > 0 && 'border-t border-line', task.done && 'bg-ok-soft/40')}>
                     <CheckCircle checked={task.done} pending={task.pending} size={32} />
                     <span className="min-w-0 flex-1">
-                      <span className={cx('block text-[17px] leading-snug', task.done ? 'text-muted line-through decoration-ok/50' : 'font-medium')}>{tr(task.title, task.title_i18n)}</span>
-                      {lang !== 'en' && tr(task.title, task.title_i18n) !== task.title && (
-                        <span className="block text-[13px] leading-snug text-muted" dir="ltr" lang="en">{task.title}</span>
+                      <span className={cx('block text-[17px] leading-snug', task.done ? 'text-muted line-through decoration-ok/50' : 'font-medium')}>{task.title}</span>
+                      {second && trs(task.title, task.title_i18n) && (
+                        <span className="block text-[14px] leading-snug text-muted" lang={second} dir={dir2}>{trs(task.title, task.title_i18n)}</span>
                       )}
                       <span className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[13px] text-muted">
                         {task.done && (
@@ -94,8 +96,8 @@ export default function RoundView() {
         {allDone && (
           <div className="rounded-3xl bg-gradient-to-br from-ok to-green-700 p-6 text-center text-white shadow-lift animate-fadeup">
             <PartyPopper className="mx-auto h-10 w-10" />
-            <p className="mt-2 text-xl font-semibold">{t('allDone')}</p>
-            <Button variant="white" className="mt-4" onClick={() => nav('/c')}>{t('back')}</Button>
+            <p className="mt-2 text-xl font-semibold"><Bi k="allDone" sub="mt-0.5 block text-[15px] font-medium opacity-85" /></p>
+            <Button variant="white" className="mt-4" onClick={() => nav('/c')}>{tb('back')}</Button>
           </div>
         )}
       </div>

@@ -14,7 +14,7 @@ declare
   r record; t record; it record;
   v_planned timestamp; v_done_at timestamp;
   v_k int; v_n int; v_win numeric; v_rand numeric; v_daily numeric; v_use int; v_need numeric;
-  v_order uuid; v_area text; v_rep jsonb; v_report_time time := time '16:00';
+  v_order uuid; v_area text; v_rep jsonb; v_report_time time := time '16:00'; v_ri int;
 begin
   select timezone into v_tz from public.rh_orgs where id = p_org and is_demo;
   if v_tz is null then raise exception 'Not a demo workspace'; end if;
@@ -109,8 +109,8 @@ begin
       update _rh_st set acc = it.acc + v_daily - v_use, total = greatest(it.total - v_use, 0) where item_id = it.id;
     end loop;
 
-    -- daily pantry & cleaning count (~15:36) — today only once the count window has started
-    if d < v_today or v_now::time >= time '15:40' then
+    -- daily pantry & cleaning count (~15:36) — past days only: today's count is left for whoever tries the demo
+    if d < v_today then
       v_who := case when (d - v_first) % 2 = 0 then v_c2 else v_c1 end;
       insert into public.rh_stock_counts(item_id, day, qty_opened, qty_store, counted_by, counted_at)
       select x.id, d, x.op, x.total - x.op, v_who,
@@ -135,7 +135,9 @@ begin
     end if;
 
     -- cleaning rounds
+    v_ri := 0;
     for r in select * from public.rh_routines where org_id = p_org and active and kind <> 'stock' and v_dow = any(days) order by sort loop
+      v_ri := v_ri + 1;
       select count(*) into v_n from public.rh_tasks tt where tt.routine_id = r.id and tt.active and (tt.days is null or v_dow = any(tt.days));
       v_k := 0;
       v_win := extract(epoch from (r.end_time - r.start_time)) / 60.0;
@@ -144,6 +146,8 @@ begin
         v_planned := d + r.start_time + make_interval(mins => floor((v_k + 0.6) * v_win * 0.85 / greatest(v_n, 1))::int);
         v_k := v_k + 1;
         v_rand := random();
+        -- today the demo always leaves work to try: the second round stops halfway, later rounds are untouched
+        continue when d = v_today and (v_ri >= 3 or (v_ri = 2 and v_k > v_n / 2));
         continue when v_rand < 0.03;                               -- occasionally missed
         v_done_at := v_planned + make_interval(secs => floor(random() * 240 - 60)::int);
         if v_rand > 0.96 then                                     -- occasionally late

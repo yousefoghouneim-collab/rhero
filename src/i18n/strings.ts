@@ -12,6 +12,12 @@ export const LANGS: { code: Lang; name: string; native: string; dir: 'ltr' | 'rt
   { code: 'tl', name: 'Tagalog', native: 'Tagalog', dir: 'ltr' },
 ];
 
+/** "English" or "English + Luganda" — the app always shows English, plus the chosen language */
+export const langLabel = (code?: Lang | null) => {
+  const l = LANGS.find((x) => x.code === code);
+  return !l || l.code === 'en' ? 'English' : `English + ${l.name}`;
+};
+
 type Row = Record<Lang, string>;
 type Base = Omit<Row, 'lg' | 'sw'>;
 const r = (en: string, ar: string, hi: string, ur: string, bn: string, ml: string, tl: string): Base => ({ en, ar, hi, ur, bn, ml, tl });

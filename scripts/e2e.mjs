@@ -61,7 +61,7 @@ await c.click('button[type="submit"]');
 await c.waitForURL('**/c', { timeout: 25000 });
 await c.waitForTimeout(1500);
 ok('cleaner signs in with phone + PIN', true);
-ok('cleaner UI in Luganda', (await c.locator('text=Leero').count()) > 0);
+ok('cleaner app shows English with Luganda underneath', (await c.locator('text=Today').count()) > 0 && (await c.locator('text=Leero').count()) > 0);
 await shot(c, 'c1-today');
 
 // tick an open task — works at any time of day: use the first round that still has an open task,
@@ -83,7 +83,7 @@ await target.click();
 ok(openRound ? 'cleaner ticks a task' : 'cleaner un-ticks a task (all rounds already done today)',
   await waitFor(async () => (await c.locator('[data-testid="task-row"][data-done="1"]').count()) !== doneBefore, 3000), taskText);
 ok('tick synced to the server', await outboxEmpty(c));
-ok('Luganda task names show the English name underneath', (await c.locator('[data-testid="task-row"] span[lang="en"]').count()) > 0);
+ok('task names in English with the Luganda name underneath', (await c.locator('[data-testid="task-row"] span[lang="lg"]').count()) > 0);
 await shot(c, 'c2-round');
 const cleaningLive = await waitFor(async () => (await kpi('kpi-cleaning')) !== cleaningBefore, 12000);
 ok('manager dashboard updates live (cleaning)', cleaningLive, `${cleaningBefore} → ${await kpi('kpi-cleaning')}`);
@@ -179,7 +179,7 @@ await u.fill('#phone', '+256 ' + ugLocal.slice(1));
 await u.fill('#pin', '4321');
 await u.click('button[type="submit"]');
 ok('Ugandan number signs in (+256 …)', await u.waitForURL('**/c', { timeout: 25000 }).then(() => true, () => false));
-ok('new cleaner sees the app in Luganda', await waitFor(() => u.locator('text=Leero').first().isVisible(), 10000));
+ok('new cleaner sees English + Luganda', await waitFor(() => u.locator('text=Leero').first().isVisible(), 10000));
 await shot(u, 'u1-today');
 fs.writeFileSync(path.join(SHOTS, 'cleanup.json'), JSON.stringify({ phone: '+256' + ugLocal.slice(1) }));
 

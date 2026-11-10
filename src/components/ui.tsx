@@ -165,8 +165,8 @@ export function Toggle({ checked, onChange, label, disabled }: { checked: boolea
 }
 
 /** Big +/- number control for counting stock with one thumb */
-export function Stepper({ value, onChange, min = 0, max = 9999, label, size = 'lg', changed }: {
-  value: number; onChange: (v: number) => void; min?: number; max?: number; label?: string; size?: 'md' | 'lg'; changed?: boolean;
+export function Stepper({ value, onChange, min = 0, max = 9999, label, sub, size = 'lg', changed }: {
+  value: number; onChange: (v: number) => void; min?: number; max?: number; label?: string; sub?: string | null; size?: 'md' | 'lg'; changed?: boolean;
 }) {
   const [text, setText] = useState(String(value));
   useEffect(() => setText(String(value)), [value]);
@@ -176,6 +176,7 @@ export function Stepper({ value, onChange, min = 0, max = 9999, label, size = 'l
   return (
     <div className="flex flex-col items-center gap-1">
       {label && <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{label}</span>}
+      {sub && <span className="-mt-1 text-[10.5px] font-medium leading-none text-muted/90">{sub}</span>}
       <div className={cx('flex items-stretch overflow-hidden rounded-xl border bg-surface', changed ? 'border-navy-500 ring-2 ring-navy-100' : 'border-line')}>
         <button type="button" aria-label="minus" onClick={() => set(value - 1)} className={cx(w, h, 'flex items-center justify-center text-navy-700 active:bg-navy-50 disabled:opacity-30')} disabled={value <= min}>
           <Minus className="h-5 w-5" />

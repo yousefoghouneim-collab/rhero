@@ -34,7 +34,7 @@ console.log('live org', live.id);
 const users = [
   { org_id: demo.id, full_name: 'Dina Maged', role: 'manager', email: 'dina@demo.rhero.app', password: 'RHero-demo-2026', language: 'en' },
   { org_id: demo.id, full_name: 'Grace Nakato', role: 'cleaner', phone: '050 111 1111', pin: '1111', language: 'lg' },
-  { org_id: demo.id, full_name: 'Esther Akello', role: 'cleaner', phone: '050 222 2222', pin: '2222', language: 'en' },
+  { org_id: demo.id, full_name: 'Esther Akello', role: 'cleaner', phone: '050 222 2222', pin: '2222', language: 'sw' },
   { org_id: live.id, full_name: 'Dina Maged', role: 'manager', email: 'dina@rhero.app', password: process.env.RH_LIVE_PASSWORD, language: 'en' },
 ];
 for (const u of users) {

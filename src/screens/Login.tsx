@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { Navigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Globe, Lock, Mail, Phone, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
-import { useI18n } from '../i18n';
-import { LANGS } from '../i18n/strings';
+import { Bi, Second, useI18n } from '../i18n';
+import { langLabel } from '../i18n/strings';
 import { Avatar, Button, Input, Label, Segmented, cx } from '../components/ui';
 import { Logo } from '../components/Brand';
 import { LanguageSheet } from '../components/LanguageSheet';
@@ -15,7 +15,7 @@ type Mode = 'phone' | 'email';
 
 export default function Login() {
   const { status, me } = useAuth();
-  const { t, lang, setLang } = useI18n();
+  const { t, tb, pref, setLang } = useI18n();
   const [params] = useSearchParams();
   const [mode, setMode] = useState<Mode>('phone');
   const [phone, setPhone] = useState('');
@@ -34,7 +34,7 @@ export default function Login() {
       await fn();
     } catch (e) {
       const m = errMsg(e);
-      setError(/invalid login|credentials|phone/i.test(m) ? wrongMsg : /internet/i.test(m) ? t('noInternet') : m);
+      setError(/invalid login|credentials|phone/i.test(m) ? wrongMsg : /internet/i.test(m) ? tb('noInternet') : m);
       setBusy(null);
     }
   };
@@ -55,7 +55,7 @@ export default function Login() {
     return <Navigate to={next && next.startsWith(home) ? next : home} replace />;
   }
 
-  const langName = LANGS.find((l) => l.code === lang)?.native ?? 'English';
+  const langName = langLabel(pref);
 
   return (
     <div className="min-h-dvh bg-navy-grad">
@@ -70,13 +70,14 @@ export default function Login() {
         <div className="px-6 pb-8 pt-10">
           <Logo dark className="h-14" />
           <p className="mt-4 text-lg text-white/80">{t('tagline')}</p>
+          <Second k="tagline" className="mt-0.5 block text-[15px] text-white/55" />
         </div>
 
         <div className="mt-auto rounded-t-[28px] bg-bg px-5 pb-[max(20px,env(safe-area-inset-bottom))] pt-6 shadow-lift sm:mb-8 sm:rounded-[28px]">
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (mode === 'phone') void go('form', () => signInWithPhone(phone, pin), t('wrongLogin'));
+              if (mode === 'phone') void go('form', () => signInWithPhone(phone, pin), tb('wrongLogin'));
               else void go('form', () => signInWithEmail(email, password), 'Wrong email or password');
             }}
             className="space-y-4"
@@ -87,7 +88,7 @@ export default function Login() {
             {mode === 'phone' ? (
               <>
                 <div>
-                  <Label htmlFor="phone">{t('phone')}</Label>
+                  <Label htmlFor="phone"><Bi k="phone" sub="ms-1.5 inline text-[13px] font-medium text-muted" /></Label>
                   <div className="relative">
                     <span className="pointer-events-none absolute inset-y-0 start-3.5 flex items-center text-muted"><Phone className="h-5 w-5" /></span>
                     <Input id="phone" type="tel" inputMode="tel" autoComplete="tel" dir="ltr" placeholder="050 123 4567" value={phone}
@@ -96,6 +97,7 @@ export default function Login() {
                 </div>
                 <div>
                   <Label htmlFor="pin" hint={t('pinHint')}>{t('pin')}</Label>
+                  <Second k="pinHint" className="-mt-1 mb-1.5 block text-xs text-muted" />
                   <div className="relative">
                     <span className="pointer-events-none absolute inset-y-0 start-3.5 flex items-center text-muted"><Lock className="h-5 w-5" /></span>
                     <Input id="pin" type="password" inputMode="numeric" pattern="[0-9]*" autoComplete="current-password" maxLength={8} dir="ltr" placeholder="••••"
@@ -119,21 +121,21 @@ export default function Login() {
             {error && <p className="rounded-xl bg-bad-soft px-3.5 py-2.5 text-sm font-medium text-bad-ink" role="alert">{error}</p>}
 
             <Button type="submit" size="xl" block loading={busy === 'form'} icon={busy === 'form' ? undefined : <ArrowRight className="h-5 w-5 flip-rtl" />}>
-              {t('signIn')}
+              <Bi k="signIn" stack="center" sub="text-[13px] font-medium opacity-80" />
             </Button>
           </form>
 
           <div className="mt-7">
             <div className="mb-3 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-brand-red" />
-              <h2 className="text-sm font-semibold">{t('demoTitle')}</h2>
+              <h2 className="text-sm font-semibold"><Bi k="demoTitle" sub="ms-1.5 inline font-medium text-muted" /></h2>
             </div>
-            <p className="mb-3 text-[13px] text-muted">{t('demoHint')}</p>
+            <p className="mb-3 text-[13px] text-muted"><Bi k="demoHint" /></p>
             <div className="grid gap-2">
               {([
                 { key: 'manager' as const, name: DEMO.manager.name, role: t('officeManager'), sub: 'Dashboard · stock · orders · reports', color: '#202854' },
-                { key: 'cleaner1' as const, name: DEMO.cleaner1.name, role: t('cleaner'), sub: `${DEMO.cleaner1.phone} · PIN ${DEMO.cleaner1.pin} · Luganda`, color: '#0f766e' },
-                { key: 'cleaner2' as const, name: DEMO.cleaner2.name, role: t('cleaner'), sub: `${DEMO.cleaner2.phone} · PIN ${DEMO.cleaner2.pin} · English`, color: '#c2410c' },
+                { key: 'cleaner1' as const, name: DEMO.cleaner1.name, role: t('cleaner'), sub: `${DEMO.cleaner1.phone} · PIN ${DEMO.cleaner1.pin} · English + Luganda`, color: '#0f766e' },
+                { key: 'cleaner2' as const, name: DEMO.cleaner2.name, role: t('cleaner'), sub: `${DEMO.cleaner2.phone} · PIN ${DEMO.cleaner2.pin} · English + Kiswahili`, color: '#c2410c' },
               ]).map((d) => (
                 <button key={d.key} onClick={() => void demo(d.key)} disabled={!!busy}
                   className={cx('focus-ring flex items-center gap-3 rounded-2xl border border-line bg-surface p-3 text-start shadow-card transition hover:border-navy-200 active:scale-[.99] disabled:opacity-60')}>
@@ -153,7 +155,7 @@ export default function Login() {
           </p>
         </div>
       </div>
-      <LanguageSheet open={langOpen} onClose={() => setLangOpen(false)} value={lang} onPick={setLang} />
+      <LanguageSheet open={langOpen} onClose={() => setLangOpen(false)} value={pref} onPick={setLang} />
     </div>
   );
 }

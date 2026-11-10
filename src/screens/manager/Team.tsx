@@ -7,7 +7,7 @@ import { adminCall, errMsg } from '../../lib/supabase';
 import { toast } from '../../lib/toast';
 import { ago } from '../../lib/time';
 import { formatPhone, localPhone, maskPhoneInput, normalizePhone } from '../../lib/phone';
-import { LANGS } from '../../i18n/strings';
+import { LANGS, langLabel } from '../../i18n/strings';
 import type { Lang, Profile, Role } from '../../lib/types';
 import { Avatar, Badge, Button, Card, Field, Input, Segmented, Select, Sheet, Skeleton, Toggle, useConfirm } from '../../components/ui';
 import { copyText, PageBody, PageTop, whatsappUrl } from './common';
@@ -17,13 +17,24 @@ const randomPin = () => String(Math.floor(1000 + Math.random() * 9000));
 export function loginMessage(name: string, phone: string, pin: string, lang: Lang) {
   const url = window.location.origin;
   const p = formatPhone(phone);
-  // full message in the languages of the Ugandan team; a translated greeting for the others
-  if (lang === 'lg') {
-    return `Oli otya ${name}! Eno ye app ya RHero ey'emirimu gy'okuyonja egya buli lunaku n'okubala sitooka.\n\n1) Ggulawo: ${url}\n2) Ennamba y'essimu: ${p}\n3) PIN: ${pin}\n\nAmagezi: mu Safari/Chrome londa “Add to Home Screen” app esigale ku ssimu yo.`;
-  }
-  if (lang === 'sw') {
-    return `Habari ${name}! Hii ni programu ya RHero kwa kazi zako za usafi za kila siku na hesabu ya bidhaa.\n\n1) Fungua: ${url}\n2) Namba ya simu: ${p}\n3) PIN: ${pin}\n\nKidokezo: kwenye Safari/Chrome chagua “Add to Home Screen” ili programu ibaki kwenye simu yako.`;
-  }
+  // English first (like the app), then the cleaner's own language
+  const en = {
+    hello: `Hi ${name}! This is the RHero app for your daily cleaning tasks and stock count.`,
+    open: 'Open', phone: 'Phone',
+    tip: 'Tip: in Safari/Chrome choose “Add to Home Screen” to keep the app on your phone.',
+  };
+  const full: Partial<Record<Lang, typeof en>> = {
+    lg: {
+      hello: `Oli otya ${name}! Eno ye app ya RHero ey'emirimu gy'okuyonja egya buli lunaku n'okubala sitooka.`,
+      open: 'Ggulawo', phone: "Ennamba y'essimu",
+      tip: 'Amagezi: mu Safari/Chrome londa “Add to Home Screen” app esigale ku ssimu yo.',
+    },
+    sw: {
+      hello: `Habari ${name}! Hii ni programu ya RHero kwa kazi zako za usafi za kila siku na hesabu ya bidhaa.`,
+      open: 'Fungua', phone: 'Namba ya simu',
+      tip: 'Kidokezo: kwenye Safari/Chrome chagua “Add to Home Screen” ili programu ibaki kwenye simu yako.',
+    },
+  };
   const greet: Partial<Record<Lang, string>> = {
     hi: `नमस्ते ${name}! यह RHero ऐप है — रोज़ के सफ़ाई काम और स्टॉक गिनती के लिए।`,
     ur: `السلام علیکم ${name}! یہ RHero ایپ ہے — روزانہ صفائی کے کام اور اسٹاک کی گنتی کے لیے۔`,
@@ -32,7 +43,12 @@ export function loginMessage(name: string, phone: string, pin: string, lang: Lan
     tl: `Hi ${name}! Ito ang RHero app — para sa araw-araw na paglilinis at bilang ng stock.`,
     ar: `مرحباً ${name}! هذا تطبيق RHero — لمهام التنظيف اليومية وجرد المخزون.`,
   };
-  return `${greet[lang] ?? `Hi ${name}! This is the RHero app for your daily cleaning tasks and stock count.`}\n\n1) Open: ${url}\n2) Phone: ${p}\n3) PIN: ${pin}\n\nTip: in Safari/Chrome choose “Add to Home Screen” to keep the app on your phone.`;
+  const o = full[lang];
+  const hello = [en.hello, o?.hello ?? greet[lang]].filter(Boolean).join('\n');
+  const open = o ? `${en.open} / ${o.open}` : en.open;
+  const phoneLabel = o ? `${en.phone} / ${o.phone}` : en.phone;
+  const tip = [en.tip, o?.tip].filter(Boolean).join('\n');
+  return `${hello}\n\n1) ${open}: ${url}\n2) ${phoneLabel}: ${p}\n3) PIN: ${pin}\n\n${tip}`;
 }
 
 export default function Team() {
@@ -60,7 +76,7 @@ export default function Team() {
                           <span className={`absolute -bottom-0.5 -end-0.5 h-3.5 w-3.5 rounded-full border-2 border-white ${active ? 'bg-ok' : 'bg-line'}`} /></div>
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold">{p.full_name} {!p.active && <Badge tone="bad">Disabled</Badge>}</p>
-                          <p className="truncate text-[13px] text-muted">{p.phone ? formatPhone(p.phone) : p.email}{p.role === 'cleaner' ? ` · ${LANGS.find((l) => l.code === p.language)?.native}` : ''}</p>
+                          <p className="truncate text-[13px] text-muted">{p.phone ? formatPhone(p.phone) : p.email}{p.role === 'cleaner' ? ` · ${langLabel(p.language)}` : ''}</p>
                         </div>
                         <span className="text-[12px] text-muted">{p.id === me.id ? 'You' : active ? 'Active now' : ago(p.last_seen_at)}</span>
                       </button>
@@ -135,7 +151,7 @@ function AddSheet({ onClose }: { onClose: () => void }) {
                 <div className="flex gap-2"><Input inputMode="numeric" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 8))} className="text-lg tracking-[.3em]" />
                   <Button variant="secondary" icon={<RefreshCw className="h-4 w-4" />} onClick={() => setPin(randomPin())}>New</Button></div>
               </Field>
-              <Field label="App language"><Select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>{LANGS.map((l) => <option key={l.code} value={l.code}>{l.native} — {l.name}</option>)}</Select></Field>
+              <Field label="App language" hint="English is always shown"><Select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>{LANGS.map((l) => <option key={l.code} value={l.code}>{l.code === 'en' ? 'English only' : `English + ${l.name}${l.native !== l.name ? ` (${l.native})` : ''}`}</option>)}</Select></Field>
             </>
           ) : (
             <>
@@ -187,7 +203,7 @@ function EditSheet({ person, onClose }: { person: Profile; onClose: () => void }
           <Field label="Mobile number"><Input type="tel" dir="ltr" value={phone} onChange={(e) => setPhone(maskPhoneInput(e.target.value))} /></Field>
           {person.role === 'cleaner' && (
             <>
-              <Field label="App language"><Select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>{LANGS.map((l) => <option key={l.code} value={l.code}>{l.native} — {l.name}</option>)}</Select></Field>
+              <Field label="App language" hint="English is always shown"><Select value={lang} onChange={(e) => setLang(e.target.value as Lang)}>{LANGS.map((l) => <option key={l.code} value={l.code}>{l.code === 'en' ? 'English only' : `English + ${l.name}${l.native !== l.name ? ` (${l.native})` : ''}`}</option>)}</Select></Field>
               <div className="rounded-2xl border border-line p-3">
                 {newPin ? (
                   <Field label="New PIN"><div className="flex gap-2"><Input inputMode="numeric" value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 8))} className="text-lg tracking-[.3em]" /><Button variant="ghost" onClick={() => setNewPin(null)}>Cancel</Button></div></Field>

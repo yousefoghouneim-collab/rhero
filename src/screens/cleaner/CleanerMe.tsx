@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import { ChevronRight, Globe, LogOut, Phone, Smartphone } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth, useMe } from '../../auth/AuthProvider';
-import { useI18n } from '../../i18n';
-import { LANGS } from '../../i18n/strings';
+import { Bi, useI18n } from '../../i18n';
+import { langLabel } from '../../i18n/strings';
 import { useTeam } from '../../lib/data';
 import { useToday } from '../../lib/today';
 import { adminCall, supabase } from '../../lib/supabase';
@@ -15,7 +15,7 @@ import { LanguageSheet } from '../../components/LanguageSheet';
 export default function CleanerMe() {
   const { me, org } = useMe();
   const { signOut } = useAuth();
-  const { t, lang } = useI18n();
+  const { tb, pref } = useI18n();
   const qc = useQueryClient();
   const team = useTeam();
   const { doneRows, stock } = useToday();
@@ -45,37 +45,37 @@ export default function CleanerMe() {
       </header>
       <div className="-mt-4 space-y-4 px-4 pb-6">
         <Card className="grid grid-cols-2 gap-4 p-4">
-          <Stat label={t('doneToday')} value={mine} sub={t('tasks')} />
-          <Stat label={t('stock')} value={`${stock.counted}/${stock.total}`} />
+          <Stat label={<Bi k="doneToday" sub="block text-[11px] font-medium normal-case tracking-normal opacity-80" />} value={mine} sub={tb('tasks')} />
+          <Stat label={<Bi k="stock" sub="block text-[11px] font-medium normal-case tracking-normal opacity-80" />} value={`${stock.counted}/${stock.total}`} />
         </Card>
         <Card className="divide-y divide-line">
           <button onClick={() => setLangOpen(true)} className="flex w-full items-center gap-3 p-4 text-start">
             <Globe className="h-5 w-5 text-navy-500" />
-            <span className="flex-1 font-semibold">{t('language')}</span>
-            <span className="text-muted">{LANGS.find((l) => l.code === lang)?.native}</span>
+            <span className="block flex-1 font-semibold"><Bi k="language" sub="block text-[13px] font-medium text-muted" /></span>
+            <span className="text-end text-[14px] text-muted">{langLabel(pref)}</span>
             <ChevronRight className="h-5 w-5 text-navy-200 flip-rtl" />
           </button>
           <button onClick={() => setInstallOpen(true)} className="flex w-full items-center gap-3 p-4 text-start">
             <Smartphone className="h-5 w-5 text-navy-500" />
-            <span className="flex-1 font-semibold">{t('installApp')}</span>
+            <span className="block flex-1 font-semibold"><Bi k="installApp" sub="block text-[13px] font-medium text-muted" /></span>
             <ChevronRight className="h-5 w-5 text-navy-200 flip-rtl" />
           </button>
           {manager && (
             <a href={`tel:${manager.phone}`} className="flex w-full items-center gap-3 p-4">
               <Phone className="h-5 w-5 text-navy-500" />
-              <span className="flex-1 font-semibold">{t('callManager')}</span>
+              <span className="block flex-1 font-semibold"><Bi k="callManager" sub="block text-[13px] font-medium text-muted" /></span>
               <span className="text-muted" dir="ltr">{manager.full_name.split(' ')[0]}</span>
             </a>
           )}
           <button onClick={() => void signOut()} className="flex w-full items-center gap-3 p-4 text-start text-bad">
             <LogOut className="h-5 w-5 flip-rtl" />
-            <span className="flex-1 font-semibold">{t('signOut')}</span>
+            <span className="block flex-1 font-semibold"><Bi k="signOut" sub="block text-[13px] font-medium opacity-75" /></span>
           </button>
         </Card>
         <p className="text-center text-xs text-muted">RHero v1.0 · RH Aero Systems</p>
       </div>
-      <LanguageSheet open={langOpen} onClose={() => setLangOpen(false)} value={lang} onPick={(l) => void pickLang(l)} />
-      <Sheet open={installOpen} onClose={() => setInstallOpen(false)} title={t('installApp')}>
+      <LanguageSheet open={langOpen} onClose={() => setLangOpen(false)} value={pref} onPick={(l) => void pickLang(l)} />
+      <Sheet open={installOpen} onClose={() => setInstallOpen(false)} title={tb('installApp')}>
         <InstallSteps />
       </Sheet>
     </div>
